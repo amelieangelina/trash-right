@@ -1,0 +1,21 @@
+services:
+  # streamlitapp:
+  #   build:
+  #     context: ./streamlitapp
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - ./streamlitapp:/usr/src/app
+  #   ports:
+  #     - "8501:8501"
+  #   # environemnt:
+  #   #   -some variable=some value
+  my_app:
+    build:
+      context: ./my_app/docker
+      dockerfile: Dockerfile
+    volumes:
+      - ./my_app:/usr/src/app
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
