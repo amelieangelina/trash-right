@@ -2,66 +2,96 @@
 
 import Image from "next/image";
 import Link from 'next/link';
-import { useEffect } from 'react';
+import { useEffect,  useState, useRef } from 'react';
 
 export default function Home() {
+
+  const [isPhotoTaken, setIsPhotoTaken] = useState(false);
+  const [photoSrc, setPhotoSrc] = useState('');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const photoRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const captureRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     const width = 640;
     let height = 0;
     let streaming = false;
-    const video = document.getElementById('video') as HTMLVideoElement;
-    const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-    const photo = document.getElementById('photo') as HTMLImageElement;
-    const capture = document.getElementById('capture') as HTMLButtonElement;
 
-    // communicates with the user camera and can work with smartphones and webcams
-    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-      .then((stream) => {
-        video.srcObject = stream;
-        video.play();
-      })
-      .catch((err) => {
-        console.error(`An error occurred: ${err}`);
-      });
+    const video = videoRef.current;
+    const capture = captureRef.current;
 
-    video.addEventListener('canplay', () => {
-      if (!streaming) {
-        height = video.videoHeight / (video.videoWidth / width);
-        video.setAttribute('width', `${width}`);
-        video.setAttribute('height', `${height}`);
-        canvas.setAttribute('width', `${width}`);
-        canvas.setAttribute('height', `${height}`);
-        streaming = true;
-      }
-    });
+    if (video && capture) {
+      // Communicates with the user camera and works with smartphones and webcams
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then((stream) => {
+          video.srcObject = stream;
+          video.play();
+        })
+        .catch((err) => {
+          console.error(`An error occurred: ${err}`);
+        });
 
-    capture.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      takePicture();
-    });
+      const handleCanPlay = () => {
+        if (!streaming) {
+          height = video.videoHeight / (video.videoWidth / width);
+          video.setAttribute('width', `${width}`);
+          video.setAttribute('height', `${height}`);
+          if (canvasRef.current) {
+            canvasRef.current.setAttribute('width', `${width}`);
+            canvasRef.current.setAttribute('height', `${height}`);
+          }
+          streaming = true;
+        }
+      };
 
-    const takePicture = () => {
-      const context = canvas.getContext('2d');
-      if (width && height) {
-        canvas.width = width;
-        canvas.height = height;
-        context?.drawImage(video, 0, 0, width, height);
-        const data = canvas.toDataURL('image/png');
-        photo.setAttribute('src', data);
-      } else {
-        clearPhoto();
-      }
-    };
+      const handleCaptureClick = (ev: MouseEvent) => {
+        ev.preventDefault();
+        takePicture();
+      };
 
-    const clearPhoto = () => {
-      const context = canvas.getContext('2d');
-      context?.fillRect(0, 0, canvas.width, canvas.height);
-      const data = canvas.toDataURL('image/png');
-      photo.setAttribute('src', data);
-    };
+      const takePicture = () => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const context = canvas.getContext('2d');
+          if (width && height) {
+            canvas.width = width;
+            canvas.height = height;
+            context?.drawImage(video, 0, 0, width, height);
 
-    clearPhoto();
+            const data = canvas.toDataURL('image/png');
+            if (photoRef.current) {
+              photoRef.current.setAttribute('src', data);
+            }
+            setIsPhotoTaken(true);
+          }
+        }
+      };
+
+      video.addEventListener('canplay', handleCanPlay);
+      capture.addEventListener('click', handleCaptureClick);
+
+      // Cleanup function to remove event listeners
+      return () => {
+        video.removeEventListener('canplay', handleCanPlay);
+        capture.removeEventListener('click', handleCaptureClick);
+      };
+    }
   }, []);
+
+  const acceptPhoto = () => {
+    setIsPhotoTaken(false);
+    const photoRef = document.getElementById('photoRef') as HTMLImageElement;
+  };
+
+  const denyPhoto = () => {
+    const canvas = document.getElementById('canvasRef') as HTMLCanvasElement;
+    const context = canvas?.getContext('2d');
+    context?.clearRect(0, 0, canvas.width, canvas.height); // Adjust the width and height as needed
+    setPhotoSrc('');
+    setIsPhotoTaken(false);
+  };
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -79,14 +109,31 @@ export default function Home() {
 
       <div className="content">
         <div className="camera">
-          <video id="video">Stream not available.</video>
-          <button id="capture">Take photo</button>
+          <video ref={videoRef} id="video">Stream not available.</video>
+          <button ref={captureRef} id="capture">Capture Image</button>
         </div>
-        <canvas id="canvas"></canvas>
         <div className="output">
-          <img id="photo"/>
+            <canvas ref={canvasRef} id="canvas"/>
+            <div className="relative">
+              <img ref={photoRef} id="photo" alt="Captured" />
+              <div className="button-container flex justify-between">
+                <button onClick={acceptPhoto}>Accept</button>
+                <button onClick={denyPhoto}>Deny</button>
+                <span>{isPhotoTaken ? 'Photo Taken' : 'No Photo'}</span>
+              </div>
+            </div>
         </div>
       </div>
+      <div className="content2">
+        {isPhotoTaken ? (
+          'Photo taken'
+          ) :
+          (
+          'Photo not taken'
+        )
+        }
+      </div>
+      
 
       <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
         {/* TODO: replace page  */}
