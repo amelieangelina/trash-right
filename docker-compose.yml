@@ -11,11 +11,18 @@ services:
   #   #   -some variable=some value
   my_app:
     build:
-      context: ./my_app/docker
+      context: ./my_app
       dockerfile: Dockerfile
-    volumes:
-      - ./my_app:/usr/src/app
     environment:
       NODE_ENV: production
     ports:
       - "3000:3000"
+
+  server:
+    build:
+      context: ./gemini
+      dockerfile: docker/Dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - ./gemini:/usr/src/app

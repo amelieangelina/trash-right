@@ -1,25 +1,57 @@
 ARG NODE_VERSION=20.16.0
+# Use an official Node.js image as a base for building the Next.js app
+FROM node:${NODE_VERSION}-alpine AS base
 
-FROM node:${NODE_VERSION}-alpine
+# 1. Install dependencies only when needed
+FROM base AS deps
+
+RUN apk add --no-cache python3 py3-pip libc6-compat
 
 WORKDIR /usr/src/app
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.npm to speed up subsequent builds.
-# Leverage a bind mounts to package.json and package-lock.json to avoid having to copy them into
-# into this layer.
-# RUN --mount=type=bind,source=package.json,target=package.json \
-#     --mount=type=bind,source=package-lock.json,target=package-lock.json \
-#     --mount=type=cache,target=/root/.npm \
-#     npm ci --omit=dev
 
-# Run the application as a non-root user.
-USER node
+# Install dependencies based on the preferred package manager
+COPY ../package.json yarn.lock* ../package-lock.json* pnpm-lock.yaml* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
 
-# install packages needed
-#COPY requirements.txt ./
-#RUN pip3 install -r requirements.txt
 
+# 2. Rebuild the source code only when needed
+FROM base AS builder
+
+WORKDIR /usr/src/app
+COPY --from=deps usr/src/app/node_modules ./node_modules
+COPY . .
+
+RUN npm run build
+
+# 3. Production image, copy all the files and run next
+FROM base AS runner
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+ARG user=nextjs
+ARG group=nodejs
+ARG usergroup=${user}:${group}
+RUN adduser -u 1001 -S ${user}
+RUN addgroup -g 1001 -S ${group}
+
+# Copy the built Next.js app from the builder stage
+COPY --from=builder --chown=${usergroup} /usr/src/app/.next ./.next
+COPY --from=builder /usr/src/app/node_modules /app/node_modules
+COPY --from=builder /usr/src/app/package.json /app/package.json
+COPY --from=builder /usr/src/app/public /app/public
+
+
+# Expose the application port
 EXPOSE 3000
 
-ENTRYPOINT ["npm", "run", "dev"]
+USER ${user}
+
+CMD ["npm", "start"]
+
