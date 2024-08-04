@@ -1,28 +1,49 @@
 services:
-  # streamlitapp:
-  #   build:
-  #     context: ./streamlitapp
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./streamlitapp:/usr/src/app
-  #   ports:
-  #     - "8501:8501"
-  #   # environemnt:
-  #   #   -some variable=some value
-  my_app:
-    build:
-      context: ./my_app
-      dockerfile: Dockerfile
-    environment:
-      NODE_ENV: production
-    ports:
-      - "3000:3000"
 
-  server:
+  # my_app:
+  #   container_name: webapp
+  #   build:
+  #     context: ./my_app
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     NODE_ENV: production
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - flaskapp
+        
+
+  flaskapp:
+    container_name: flaskapp
     build:
       context: ./gemini
       dockerfile: docker/Dockerfile
     ports:
-      - 8000:8000
+      - 4000:4000
     volumes:
       - ./gemini:/usr/src/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  db:
+    container_name: db
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata: {}

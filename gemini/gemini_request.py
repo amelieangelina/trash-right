@@ -21,5 +21,5 @@ def detect_trash():
 
 if __name__ == '__main__':
     response = detect_trash()
-    print(response)
+    # print(response)
     print(response.text)

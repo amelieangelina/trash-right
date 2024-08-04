@@ -2,13 +2,17 @@
 
 import Image from "next/image";
 import Link from 'next/link';
+import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 
 
 export default function Home() {
-
   const [isPhotoTaken, setIsPhotoTaken] = useState(false);
   const [photoSrc, setPhotoSrc] = useState('');
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [displayAnswer, setDisplayAnswer] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const photoRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -53,6 +57,7 @@ export default function Home() {
       const handleCaptureClick = (ev: MouseEvent) => {
         ev.preventDefault();
         takePicture();
+        fetchData();
       };
 
       const takePicture = () => {
@@ -91,8 +96,20 @@ export default function Home() {
     }
   }, [isPhotoTaken]);
 
-  const acceptPhoto = () => {
-    setIsPhotoTaken(false);
+  const fetchData = async () => {
+    try {
+        const response = await axios.get('http://127.0.0.1:4000/api/v1/function');
+        setData(response.data.result);
+        setLoading(false)
+    } catch (error) {
+        setError(error);
+        setLoading(false);
+    }
+  }
+
+  const acceptPhoto = async () => {
+    setDisplayAnswer(true);
+    await fetchData();
     const photoRef = document.getElementById('photoRef') as HTMLImageElement;
   };
 
@@ -102,8 +119,8 @@ export default function Home() {
     context?.clearRect(0, 0, canvas.width, canvas.height); // Adjust the width and height as needed
     setPhotoSrc('');
     setIsPhotoTaken(false);
+    setDisplayAnswer(false);
   };
-
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -135,10 +152,39 @@ export default function Home() {
               </div>
             </div>
           )}
+          {displayAnswer && (
+            <div className="flex flex-col items-center">
+              <h1>Next.js with Flask</h1>
+              {loading && <p>Loading...</p>}
+              {error && <p>Error: {error.message}</p>}
+              {data && <pre>{data}</pre
+              >}
+            </div>
+          )}
         </div>
         <canvas ref={canvasRef} id="canvas" style={{ display: 'none' }} />
       </div>
 
+
+      <div className="flex justify-center items-center">
+          {/* TODO: replace page */}
+          <Link
+            href="/tryserver"
+            className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
+            target="_blank"
+            rel="noopener noreferrer"
+            replace={true}
+          >
+            <h2 className="mb-3 text-2xl font-semibold">
+              TryServer{" "}
+              <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
+                -&gt;
+              </span>
+            </h2>
+            <p className="m-0 max-w-[30ch] text-sm opacity-50">
+            For trying the server            </p>
+          </Link>
+      </div>
       
       <div className="flex justify-center items-center">
           {/* TODO: replace page */}
@@ -159,7 +205,6 @@ export default function Home() {
               Original landing page of Nextjs to find templates and documentation.
             </p>
           </Link>
-        
       </div>
 
     </main>
