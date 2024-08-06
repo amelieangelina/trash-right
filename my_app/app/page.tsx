@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from 'next/link';
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
+import fs from "fs";
 
 
 export default function Home() {
@@ -13,10 +14,26 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [displayAnswer, setDisplayAnswer] = useState(false);
+  const [generateAnswer, setGenerateAnswer] = useState(false);
+  const [apiKey, setApiKey] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const photoRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const captureRef = useRef<HTMLButtonElement>(null);
+
+  // TODO: API Key
+  
+
+  // Access the API key from environment variables
+  const apiKeyFromEnv = ""//process.env.API_KEY;
+  console.log('API Key:', apiKeyFromEnv);
+
+  const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+  // Setup GenAI-model
+  const genAI = new GoogleGenerativeAI(apiKeyFromEnv);
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
+
 
   useEffect(() => {
     const width = 640;
@@ -62,6 +79,7 @@ export default function Home() {
 
       const takePicture = () => {
         const canvas = canvasRef.current;
+        console.log("IN TAKE PICTURE");
         if (canvas) {
           const context = canvas.getContext('2d');
           if (width && height) {
@@ -70,6 +88,7 @@ export default function Home() {
             context?.drawImage(video, 0, 0, width, height);
 
             const data = canvas.toDataURL('image/png');
+            console.log('Captured Image:', data);
             setPhotoSrc(data);
             setIsPhotoTaken(true);
           }
@@ -96,9 +115,30 @@ export default function Home() {
     }
   }, [isPhotoTaken]);
 
+  useEffect(() => {
+    if (photoSrc && generateAnswer) {
+      console.log("PHOTO SRC:",photoSrc);
+      const image = base64ToGenerativePart(photoSrc, 'image/png');
+      console.log("IMAGE:",image);
+      askai(image);
+      console.log("ASKAI");
+      setGenerateAnswer(false);
+      setDisplayAnswer(true);
+    }
+  }, [photoSrc, generateAnswer]);
+
+  const base64ToGenerativePart = (base64String, mimeType) => {
+    return {
+      inlineData: {
+        data: base64String,
+        mimeType
+      },
+    };
+  }
+
   const fetchData = async () => {
     try {
-        const response = await axios.get('http://127.0.0.1:4000/api/v1/function');
+        const response = await axios.get('http://127.0.0.1:4000/api/v1/detect_trash');
         setData(response.data.result);
         setLoading(false)
     } catch (error) {
@@ -108,19 +148,31 @@ export default function Home() {
   }
 
   const acceptPhoto = async () => {
-    setDisplayAnswer(true);
-    await fetchData();
-    const photoRef = document.getElementById('photoRef') as HTMLImageElement;
+    setGenerateAnswer(true);
   };
 
   const denyPhoto = () => {
     const canvas = document.getElementById('canvasRef') as HTMLCanvasElement;
+    console.log("THE Picture:",canvas);
     const context = canvas?.getContext('2d');
     context?.clearRect(0, 0, canvas.width, canvas.height); // Adjust the width and height as needed
     setPhotoSrc('');
     setIsPhotoTaken(false);
     setDisplayAnswer(false);
   };
+
+  const askai = async (image) =>{
+    const prompt = "What kind of trash is displayed in the picture. Describe the trash and suggest ways to recycle it.";
+
+    const result = await model.generateContent([prompt, image])
+  
+    const response = await result.response;
+    const text = response.text();
+    console.log(text);
+    setData(text);
+    setLoading(false);
+    setDisplayAnswer(true);
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -154,7 +206,7 @@ export default function Home() {
           )}
           {displayAnswer && (
             <div className="flex flex-col items-center">
-              <h1>Next.js with Flask</h1>
+              <h1>Google Tryout</h1>
               {loading && <p>Loading...</p>}
               {error && <p>Error: {error.message}</p>}
               {data && <pre>{data}</pre
