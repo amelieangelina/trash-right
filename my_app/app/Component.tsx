@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 
-const API_KEY = "AIzaSyB6WglnUBym0xagVU22LitY-NGcB2-XwrA"
+const API_KEY = ""
 
 
 const Component = ({getImage}: {getImage: () => Promise<string>}) => {
