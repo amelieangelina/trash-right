@@ -5,17 +5,14 @@ import Image from "next/image";
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 
+const API_KEY = "AIzaSyB6WglnUBym0xagVU22LitY-NGcB2-XwrA"
 
 
 const Component = ({getImage}: {getImage: () => Promise<string>}) => {
-  const [isPhotoTaken, setIsPhotoTaken] = useState(false);
   const [photoSrc, setPhotoSrc] = useState('');
   const [data, setData] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [displayAnswer, setDisplayAnswer] = useState(false);
   const [generateAnswer, setGenerateAnswer] = useState(false);
-  const [apiKey, setApiKey] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const photoRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -24,7 +21,7 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
 
   // Setup GenAI-model
   const { GoogleGenerativeAI } = require("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(api_key);
+  const genAI = new GoogleGenerativeAI(API_KEY);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
 
   useEffect(() => {
@@ -44,10 +41,9 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
           video.play();
         }
       } catch (err) {
-        console.error(`An error occurred: ${err}`);
+        console.error(`An error with the video stream occurred: ${err}`);
       }
     };
-
 
     if (video && capture) {
       const handleCanPlay = () => {
@@ -70,7 +66,6 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
 
       const takePicture = () => {
         const canvas = canvasRef.current;
-        console.log("IN TAKE PICTURE");
         if (canvas) {
           const context = canvas.getContext('2d');
           if (width && height) {
@@ -79,7 +74,6 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
             context?.drawImage(video, 0, 0, width, height);
             const data = canvas.toDataURL('image/jpeg');
             setPhotoSrc(data);
-            setIsPhotoTaken(true);
           }
           if (stream) {
             stream.getTracks().forEach(track => track.stop());
@@ -87,7 +81,7 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
         }
       };
 
-      if (!isPhotoTaken) {
+      if (!photoSrc) {
         startVideoStream();
         video?.addEventListener('canplay', handleCanPlay);
         capture?.addEventListener('click', handleCaptureClick);
@@ -102,7 +96,7 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
         }
       }
     }
-  }, [isPhotoTaken]);
+  }, [photoSrc]);
 
   useEffect( () => {
     if (photoSrc && generateAnswer) {
@@ -115,8 +109,6 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
       }
       askai();
       console.log("ASKAI");
-      setGenerateAnswer(false);
-      setDisplayAnswer(true);
     }
   }, [photoSrc, generateAnswer]);
 
@@ -140,8 +132,7 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
     const context = canvas?.getContext('2d');
     context?.clearRect(0, 0, canvas.width, canvas.height); // Adjust the width and height as needed
     setPhotoSrc('');
-    setIsPhotoTaken(false);
-    setDisplayAnswer(false);
+    setGenerateAnswer(false);
   };
 
   const askai = async () =>{
@@ -154,10 +145,8 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
     console.log(text);
     setData(text);
     setLoading(false);
-    setDisplayAnswer(true);
   }
 
-  
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
@@ -174,13 +163,13 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
 
       <div className="content flex flex-col items-center justify-center">
         <div className="camera-output-container relative w-[640px] h-[480px] flex flex-col items-center justify-center">
-          {!isPhotoTaken && (
+          {!photoSrc && (
             <>
               <video ref={videoRef} id="video" className="w-full h-auto">Stream not available.</video>
               <button ref={captureRef} id="capture" className="mt-4">Capture Image</button>
             </>
           )}
-          {isPhotoTaken && (
+          {photoSrc && (
             <div className="flex flex-col items-center">
               <img ref={photoRef} id="photo" src={photoSrc} alt="Captured" className="w-full h-auto" />
               <div className="button-container flex justify-between mt-4 w-full">
@@ -189,59 +178,16 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
               </div>
             </div>
           )}
-          {displayAnswer && (
+          {generateAnswer && (
             <div className="flex flex-col items-center">
               <h1>Google Tryout</h1>
               {loading && <p>Loading...</p>}
-              {error && <p>Error: {error.message}</p>}
               {data && <pre>{data}</pre
               >}
             </div>
           )}
         </div>
         <canvas ref={canvasRef} id="canvas" style={{ display: 'none' }} />
-      </div>
-
-
-      <div className="flex justify-center items-center">
-          {/* TODO: replace page */}
-          <Link
-            href="/tryserver"
-            className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-            target="_blank"
-            rel="noopener noreferrer"
-            replace={true}
-          >
-            <h2 className="mb-3 text-2xl font-semibold">
-              TryServer{" "}
-              <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-                -&gt;
-              </span>
-            </h2>
-            <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            For trying the server            </p>
-          </Link>
-      </div>
-      
-      <div className="flex justify-center items-center">
-          {/* TODO: replace page */}
-          <Link
-            href="/landing"
-            className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-            target="_blank"
-            rel="noopener noreferrer"
-            replace={true}
-          >
-            <h2 className="mb-3 text-2xl font-semibold">
-              Landing Page{" "}
-              <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-                -&gt;
-              </span>
-            </h2>
-            <p className="m-0 max-w-[30ch] text-sm opacity-50">
-              Original landing page of Nextjs to find templates and documentation.
-            </p>
-          </Link>
       </div>
 
     </main>
