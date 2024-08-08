@@ -7,8 +7,11 @@ import { useEffect, useState, useRef } from 'react';
 
 const API_KEY = ""
 
+interface ComponentProps {
+  getImage: () => Promise<string>;
+}
 
-const Component = ({getImage}: {getImage: () => Promise<string>}) => {
+const Component = ({ getImage}: ComponentProps) => {
   const [photoSrc, setPhotoSrc] = useState('');
   const [data, setData] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,6 +26,7 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
   const { GoogleGenerativeAI } = require("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(API_KEY);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
+
 
   useEffect(() => {
     const width = 640;
@@ -100,6 +104,10 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
 
   useEffect( () => {
     if (photoSrc && generateAnswer) {
+      console.log("THE TYPE:",typeof photoSrc);
+      console.log("This is the image to save :", photoSrc);
+      saveImage(photoSrc);
+      console.log("image should be saved now.")
       const image = base64ToGenerativePart(photoSrc, 'image/png');
       // Check the type
       if (photoSrc.startsWith('data:image/png;base64,')) {
@@ -112,9 +120,31 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
     }
   }, [photoSrc, generateAnswer]);
 
-  const base64ToGenerativePart = (base64String, mimeType) => {
-    console.log("this is the STRING:", base64String)
-    
+  const saveImage = async (base64Image: string) => {
+    try {
+      const response = await fetch('/api/saveImage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: base64Image,
+          filename: 'saved_image1.jpg',
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to save image');
+      }
+  
+      const data = await response.json();
+      console.log(data.message);
+    } catch (error) {
+      console.error('Error saving image:', error);
+    }
+  };
+
+  const base64ToGenerativePart = (base64String, mimeType) => {    
     return {
       inlineData: {
         data: base64String,
@@ -140,7 +170,6 @@ const Component = ({getImage}: {getImage: () => Promise<string>}) => {
     const prompt = "What kind of trash is displayed in the picture. Describe the trash and suggest ways to recycle it.";
     const imagePart = base64ToGenerativePart(encodedImage, 'image/jpeg');
     const result = await model.generateContent([prompt, imagePart])
-    console.log(result.response.text());
     const text = result.response.text();
     console.log(text);
     setData(text);
