@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Failed to save image' }, { status: 500 });
       }
     });
-
     return NextResponse.json({ message: 'Image saved successfully' }, { status: 200 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
