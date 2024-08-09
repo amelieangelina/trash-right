@@ -1,1 +1,0 @@
-from .gemini_request import detect_trash

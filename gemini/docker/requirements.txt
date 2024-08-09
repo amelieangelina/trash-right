@@ -1,7 +1,0 @@
-setuptools
-Flask
-python-dotenv
-psycopg2-binary
-Flask-SQLAlchemy
-Flask-CORS
-Pillow
