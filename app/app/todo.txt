@@ -1,3 +1,4 @@
 - hide API key in env.local
 - deploy app
 - maybe slider for length of answer
+- why is the country selected selecting the old value instead of the new one

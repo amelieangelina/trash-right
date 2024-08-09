@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import * as React from "react";
 import {Button} from "@/components/ui/button";
-import { Loader2, ChevronRight, Terminal, } from "lucide-react"
+import { Loader2, ChevronRight, Terminal, AlertCircle, } from "lucide-react"
 import { useEffect, useState, useRef } from 'react';
 import {Alert, AlertDescription, AlertTitle,} from "@/components/ui/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from "@/components/ui/accordion"
+import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,} from "@/components/ui/select"
 
 const API_KEY = ""
 
@@ -18,6 +20,7 @@ const Component = ({ getImage}: ComponentProps) => {
   const [data, setData] = useState(['']);
   const [betterWay, setBetterWay] = useState('');
   const [noRecycling, setNoRecycling] = useState('');
+  const [country, setCountry] = useState('');
   const [tryAgain, setTryAgain] = useState('Detect more trash');
   const [loading, setLoading] = useState(false);
   const [generateAnswer, setGenerateAnswer] = useState(false);
@@ -119,6 +122,74 @@ const Component = ({ getImage}: ComponentProps) => {
 
   }, [photoSrc, generateAnswer]);
 
+  const selectCountry = () => {
+    return (
+      <Select onValueChange={handleChange}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Select your Country" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>Countries</SelectLabel>
+            <SelectItem value="Argentina">Argentina</SelectItem>
+            <SelectItem value="Australia">Australia</SelectItem>
+            <SelectItem value="Austria">Austria</SelectItem>
+            <SelectItem value="Bangladesh">Bangladesh</SelectItem>
+            <SelectItem value="Belgium">Belgium</SelectItem>
+            <SelectItem value="Brazil">Brazil</SelectItem>
+            <SelectItem value="Canada">Canada</SelectItem>
+            <SelectItem value="Chile">Chile</SelectItem>
+            <SelectItem value="China">China</SelectItem>
+            <SelectItem value="Colombia">Colombia</SelectItem>
+            <SelectItem value="Czech Republic">Czech Republic</SelectItem>
+            <SelectItem value="Denmark">Denmark</SelectItem>
+            <SelectItem value="Egypt">Egypt</SelectItem>
+            <SelectItem value="Finland">Finland</SelectItem>
+            <SelectItem value="France">France</SelectItem>
+            <SelectItem value="Germany">Germany</SelectItem>
+            <SelectItem value="Greece">Greece</SelectItem>
+            <SelectItem value="Hungary">Hungary</SelectItem>
+            <SelectItem value="India">India</SelectItem>
+            <SelectItem value="Indonesia">Indonesia</SelectItem>
+            <SelectItem value="Iran">Iran</SelectItem>
+            <SelectItem value="Ireland">Ireland</SelectItem>
+            <SelectItem value="Israel">Israel</SelectItem>
+            <SelectItem value="Italy">Italy</SelectItem>
+            <SelectItem value="Japan">Japan</SelectItem>
+            <SelectItem value="Kazakhstan">Kazakhstan</SelectItem>
+            <SelectItem value="Malaysia">Malaysia</SelectItem>
+            <SelectItem value="Mexico">Mexico</SelectItem>
+            <SelectItem value="Netherlands">Netherlands</SelectItem>
+            <SelectItem value="New Zealand">New Zealand</SelectItem>
+            <SelectItem value="Nigeria">Nigeria</SelectItem>
+            <SelectItem value="Norway">Norway</SelectItem>
+            <SelectItem value="Pakistan">Pakistan</SelectItem>
+            <SelectItem value="Peru">Peru</SelectItem>
+            <SelectItem value="Philippines">Philippines</SelectItem>
+            <SelectItem value="Poland">Poland</SelectItem>
+            <SelectItem value="Portugal">Portugal</SelectItem>
+            <SelectItem value="Qatar">Qatar</SelectItem>
+            <SelectItem value="Romania">Romania</SelectItem>
+            <SelectItem value="Russia">Russia</SelectItem>
+            <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
+            <SelectItem value="Singapore">Singapore</SelectItem>
+            <SelectItem value="South Africa">South Africa</SelectItem>
+            <SelectItem value="South Korea">South Korea</SelectItem>
+            <SelectItem value="Spain">Spain</SelectItem>
+            <SelectItem value="Sweden">Sweden</SelectItem>
+            <SelectItem value="Switzerland">Switzerland</SelectItem>
+            <SelectItem value="Thailand">Thailand</SelectItem>
+            <SelectItem value="Turkey">Turkey</SelectItem>
+            <SelectItem value="United Arab Emirates">United Arab Emirates</SelectItem>
+            <SelectItem value="United Kingdom">United Kingdom</SelectItem>
+            <SelectItem value="United States">United States</SelectItem>
+            <SelectItem value="Vietnam">Vietnam</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    )
+  }
+
   const saveImage = async (base64Image: string) => {
     try {
       const response = await fetch('/api/saveImage', {
@@ -177,7 +248,7 @@ const Component = ({ getImage}: ComponentProps) => {
     var encodedImage = await getImage();
     const prompt = "Type the name of the recycable object shown in the picture and end the statement with a '.'. If there is not recycable object shown, please type 'no trash.'." +
     "In 1 sentence, type what materials the trash most probably consists of. In a third sentence tell me how many years this exact object will take to decompose in numbers."+
-    "In 1 sentence tell me how i can properly dispose this trash in Germany." +
+    "In 1 sentence tell me how i can properly dispose this trash in "+ {country}.toString +
     "In 1 sentence tell me where this trash will end up in the best case scenario. In 1 sentences tell me where the trash will end up in the worst case scenario.";
     const imagePart = base64ToGenerativePart(encodedImage, 'image/jpeg');
     const result = await model.generateContent([prompt, imagePart])
@@ -262,11 +333,20 @@ const Component = ({ getImage}: ComponentProps) => {
       )
     }
   }
+  const handleChange = (value:string) => {
+    setCountry(value);
+    console.log({country})
+  };
 
 
   return (
-    <main className="flex flex-col items-center justify-between p-24">
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
+    <main className="flex flex-col items-center justify-between p-12">
+      <div className="flex flex-col items-center justify-between w-[700px]">
+        <div className="ml-auto">
+          {selectCountry()}
+        </div>
+      </div> 
+      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px] mt-4">
         <Image
           className="w-full h-auto rounded-full"
           src="/icon_generatedai.webp"
@@ -283,7 +363,15 @@ const Component = ({ getImage}: ComponentProps) => {
       <p className="leading-7 [&:not(:first-child)]:mt-6 max-w-[700px] text-justify">
       TrashScan is an innovative application that leverages artificial intelligence to promote environmental awareness and sustainability. The app allows users to take a picture of any trash item, which is then analyzed using AI algorithms to accurately identify the type of waste. TrashScan provides detailed information about the item, including its environmental impact, recycling instructions, and proper disposal methods. By empowering individuals with knowledge about waste management, TrashScan aims to reduce environmental pollution and contribute to a cleaner, more sustainable future.
       </p>
-
+      {!country && (
+        <Alert variant="destructive" className="max-w-[700px] mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>No country selected</AlertTitle>
+          <AlertDescription>
+            Please select your country, so that we can adapt the information to your needs.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="content flex flex-col items-center justify-between mt-6">
         <div className="camera-output-container relative w-[320px] h-[240px] flex flex-col items-center justify-center">
           <div className="media-container relative flex justify-center w-full h-full">
