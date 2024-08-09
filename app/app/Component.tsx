@@ -21,9 +21,10 @@ const Component = ({ getImage}: ComponentProps) => {
   const [betterWay, setBetterWay] = useState('');
   const [noRecycling, setNoRecycling] = useState('');
   const [country, setCountry] = useState('');
-  const [tryAgain, setTryAgain] = useState('Detect more trash');
+  const [textToSpeak, setTextToSpeak] = useState(['']);
   const [loading, setLoading] = useState(false);
   const [generateAnswer, setGenerateAnswer] = useState(false);
+  const [isSwitchOn, setIsSwitchOn] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const photoRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -231,8 +232,7 @@ const Component = ({ getImage}: ComponentProps) => {
   const setBackToDefault = async () => {
     setGenerateAnswer(false);
     setPhotoSrc('');
-    setData('');
-    setTryAgain('Detect more trash');
+    setData(['']);
   };
 
   const denyPhoto = () => {
@@ -248,12 +248,11 @@ const Component = ({ getImage}: ComponentProps) => {
     var encodedImage = await getImage();
     const prompt = "Type the name of the recycable object shown in the picture and end the statement with a '.'. If there is not recycable object shown, please type 'no trash.'." +
     "In 1 sentence, type what materials the trash most probably consists of. In a third sentence tell me how many years this exact object will take to decompose in numbers."+
-    "In 1 sentence tell me how i can properly dispose this trash in "+ {country}.toString +
+    "In 1 sentence tell me how i can properly dispose this trash in "+ country.toString +
     "In 1 sentence tell me where this trash will end up in the best case scenario. In 1 sentences tell me where the trash will end up in the worst case scenario.";
     const imagePart = base64ToGenerativePart(encodedImage, 'image/jpeg');
     const result = await model.generateContent([prompt, imagePart])
     const text = result.response.text();
-    console.log("Response of AI:", text);
     const splitData = text.split(".");
     const prompt2 = "In a few sentences give me hacks on how to reduce waste of " + splitData[0] + "? Type the answer in continious text.";
     const result2 = await model.generateContent(prompt2);
@@ -261,28 +260,41 @@ const Component = ({ getImage}: ComponentProps) => {
     const prompt3 = "In a few sentences elaborate on what impact the materials:" + splitData[1] + " used in "+ splitData[0] + "can have on the environment, when not being recycled? What exaclty are the negative impacts on the environment? Type the answer in a continous text.";
     const result3 = await model.generateContent(prompt3);
     setNoRecycling(result3.response.text());
+    await createTextforSpeech(splitData);
+    if (isSwitchOn) {
+      speakText();
+    }
     setData(splitData);
     setLoading(false);
   }
 
-  const formMaterial = (data: any) => {
-    if (data[1] === "I am not sure") {
-      return (
-        <AccordionContent>
-          Unfortunately we could not detect the materials of the trash.
-        </AccordionContent>
-      )
-    } else {
-      return (
-        <AccordionContent>
-          {data[1]}.{data[2]}.
-        </AccordionContent>
-      )
+  const speakText = () => {
+    console.log("Speak Text");
+    const text = textToSpeak.toString();
+    console.log(text);
+    const voices = speechSynthesis.getVoices();
+    for (const str of textToSpeak) {
+      const utterance = new SpeechSynthesisUtterance(str);      
+      utterance.voice = voices[3];
+      speechSynthesis.speak(utterance);
     }
   }
 
+  const createTextforSpeech = (data: any) => {
+    if (data[0] === "no trash") {
+      setTextToSpeak( ["Unfortunately we could not detect any trash in the picture. This could be, because in our eyes the item does not belong to the trash bin or the picture is not clear enough.", "Please try again to detect more trash."]);
+    } else {
+      const text = ["We detected " + data[0] + "." + "Which materials does it consist of?" + data[1] + "." + data[2] + ".",
+      "How can you properly dispose this trash?" + data[3] + ".",
+      "Where will it end up?" + data[4] + "." + data[5] + ".",
+      "Is there hacks to avoid this kind of trash?"+ "."+ betterWay.toString() + ".",
+      "What is the impact on the environment?"+  "."+noRecycling];
+      console.log("Text to speak: " + text);  
+      setTextToSpeak(text);
+    }
+  }  
+
   const formatData = (data: any) => {
-    
     if (data[0] === "no trash") {
       return (
         <Alert className="max-w-[700px]">
@@ -301,8 +313,10 @@ const Component = ({ getImage}: ComponentProps) => {
           </h2>
           <Accordion type="single" className="w-[700px]">
             <AccordionItem value="item-1">
-              <AccordionTrigger>Which materials were used for it?</AccordionTrigger>
-                {formMaterial(data)}
+              <AccordionTrigger>Which materials does it consist of?</AccordionTrigger>
+              <AccordionContent>
+                {data[1]}.{data[2]}.
+              </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2">
               <AccordionTrigger>How can you properly dispose this trash?</AccordionTrigger>
@@ -339,13 +353,44 @@ const Component = ({ getImage}: ComponentProps) => {
   };
 
 
+  const handleAssistant = (value:string) => {
+    if (value === "reading-assistant") {
+      setIsSwitchOn(true);
+      console.log("Assistant turned on")
+    } else if (value === "no-assistant") {
+      setIsSwitchOn(false);
+      console.log("Assistant turned off")
+    }
+  };
+
+  const switchtoSpeech = () => {
+    return (
+      <Select onValueChange={handleAssistant}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Select an Assistant" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>Select an Assistant</SelectLabel>
+            <SelectItem value="reading-assistant">Reading Assistant</SelectItem>
+            <SelectItem value="no-assistant">No Assistant</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    )
+  }
+
+
   return (
     <main className="flex flex-col items-center justify-between p-12">
       <div className="flex flex-col items-center justify-between w-[700px]">
         <div className="ml-auto">
           {selectCountry()}
         </div>
-      </div> 
+        <div className="ml-auto mt-2">
+          {switchtoSpeech()}
+        </div>
+      </div>
       <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px] mt-4">
         <Image
           className="w-full h-auto rounded-full"
@@ -358,7 +403,7 @@ const Component = ({ getImage}: ComponentProps) => {
       </div>
 
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mt-6">
-        TrashScan
+        TrashRight
       </h1>
       <p className="leading-7 [&:not(:first-child)]:mt-6 max-w-[700px] text-justify">
       TrashScan is an innovative application that leverages artificial intelligence to promote environmental awareness and sustainability. The app allows users to take a picture of any trash item, which is then analyzed using AI algorithms to accurately identify the type of waste. TrashScan provides detailed information about the item, including its environmental impact, recycling instructions, and proper disposal methods. By empowering individuals with knowledge about waste management, TrashScan aims to reduce environmental pollution and contribute to a cleaner, more sustainable future.
