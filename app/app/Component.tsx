@@ -16,6 +16,8 @@ interface ComponentProps {
 const Component = ({ getImage}: ComponentProps) => {
   const [photoSrc, setPhotoSrc] = useState('');
   const [data, setData] = useState(['']);
+  const [betterWay, setBetterWay] = useState('');
+  const [noRecycling, setNoRecycling] = useState('');
   const [tryAgain, setTryAgain] = useState('Detect more trash');
   const [loading, setLoading] = useState(false);
   const [generateAnswer, setGenerateAnswer] = useState(false);
@@ -170,6 +172,7 @@ const Component = ({ getImage}: ComponentProps) => {
     setGenerateAnswer(false);
   };
 
+
   const askai = async () =>{
     var encodedImage = await getImage();
     const prompt = "Type the name of the recycable object shown in the picture and end the statement with a '.'. If there is not recycable object shown, please type 'no trash.'." +
@@ -181,6 +184,12 @@ const Component = ({ getImage}: ComponentProps) => {
     const text = result.response.text();
     console.log("Response of AI:", text);
     const splitData = text.split(".");
+    const prompt2 = "In a few sentences give me hacks on how to reduce waste of " + splitData[0] + "? Type the answer in continious text.";
+    const result2 = await model.generateContent(prompt2);
+    setBetterWay(result2.response.text());
+    const prompt3 = "In a few sentences elaborate on what impact the materials:" + splitData[1] + " used in "+ splitData[0] + "can have on the environment, when not being recycled? What exaclty are the negative impacts on the environment? Type the answer in a continous text.";
+    const result3 = await model.generateContent(prompt3);
+    setNoRecycling(result3.response.text());
     setData(splitData);
     setLoading(false);
   }
@@ -205,7 +214,7 @@ const Component = ({ getImage}: ComponentProps) => {
     
     if (data[0] === "no trash") {
       return (
-        <Alert>
+        <Alert className="max-w-[700px]">
           <Terminal className="h-4 w-4" />
           <AlertTitle>We could not detect any trash!</AlertTitle>
           <AlertDescription>
@@ -219,7 +228,7 @@ const Component = ({ getImage}: ComponentProps) => {
           <h2 className="mt-10 scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">
             {data[0]}
           </h2>
-          <Accordion type="single" collapsible>
+          <Accordion type="single" className="w-[700px]">
             <AccordionItem value="item-1">
               <AccordionTrigger>Which materials were used for it?</AccordionTrigger>
                 {formMaterial(data)}
@@ -234,6 +243,18 @@ const Component = ({ getImage}: ComponentProps) => {
               <AccordionTrigger>Where will it end up?</AccordionTrigger>
               <AccordionContent>
                 {data[4]}.{data[5]}.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-4">
+              <AccordionTrigger>Is there hacks to avoid this kind of trash?</AccordionTrigger>
+              <AccordionContent>
+                {betterWay}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-5">
+              <AccordionTrigger>What is the impact on the environment?</AccordionTrigger>
+              <AccordionContent>
+                {noRecycling}
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -257,11 +278,10 @@ const Component = ({ getImage}: ComponentProps) => {
       </div>
 
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mt-6">
-        Waste it right
+        TrashScan
       </h1>
-      <p className="leading-7 [&:not(:first-child)]:mt-6">
-        With the help of AI, we can help you identify the type of trash you have and suggest ways to recycle it. 
-        Take a picture of the trash and let us do the rest.
+      <p className="leading-7 [&:not(:first-child)]:mt-6 max-w-[700px] text-justify">
+      TrashScan is an innovative application that leverages artificial intelligence to promote environmental awareness and sustainability. The app allows users to take a picture of any trash item, which is then analyzed using AI algorithms to accurately identify the type of waste. TrashScan provides detailed information about the item, including its environmental impact, recycling instructions, and proper disposal methods. By empowering individuals with knowledge about waste management, TrashScan aims to reduce environmental pollution and contribute to a cleaner, more sustainable future.
       </p>
 
       <div className="content flex flex-col items-center justify-between mt-6">
