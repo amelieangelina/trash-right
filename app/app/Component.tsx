@@ -245,9 +245,10 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
 
   const askai = async () =>{
     var encodedImage = await getImage();
-    const prompt = "Type the name of the recycable object shown in the picture and end the statement with a '.'. If there is not recycable object shown, please type 'no trash.'." +
-    "In 1 sentence, type what materials the trash most probably consists of. In a third sentence tell me how many years this exact object will take to decompose in numbers."+
-    "In 1 sentence tell me how i can properly dispose this trash in "+ country.toString +
+    console.log("Country" + country.toString());
+    const prompt = "Type the name of the recycable object shown in the picture and end the statement with a '.'. If there is no recycable object shown, please type 'no trash.'." +
+    "In 1 sentence, type what materials the trash most probably consists of. In one sentence tell me how many years this exact object will take to decompose in numbers."+
+    "In 1 sentence tell me how i can properly dispose this trash in "+ country.toString() + "."+
     "In 1 sentence tell me where this trash will end up in the best case scenario. In 1 sentences tell me where the trash will end up in the worst case scenario.";
     const imagePart = base64ToGenerativePart(encodedImage, 'image/jpeg');
     const result = await model.generateContent([prompt, imagePart])
@@ -405,7 +406,7 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
         TrashRight
       </h1>
       <p className="leading-7 [&:not(:first-child)]:mt-6 max-w-[700px] text-justify">
-      TrashScan is an innovative application that leverages artificial intelligence to promote environmental awareness and sustainability. The app allows users to take a picture of any trash item, which is then analyzed using AI algorithms to accurately identify the type of waste. TrashScan provides detailed information about the item, including its environmental impact, recycling instructions, and proper disposal methods. By empowering individuals with knowledge about waste management, TrashScan aims to reduce environmental pollution and contribute to a cleaner, more sustainable future.
+      TrashRight is an innovative application that leverages artificial intelligence to promote environmental awareness and sustainability. The app allows users to take a picture of any trash item, which is then analyzed using AI algorithms to accurately identify the type of waste. TrashScan provides detailed information about the item, including its environmental impact, recycling instructions, and proper disposal methods. By empowering individuals with knowledge about waste management, TrashScan aims to reduce environmental pollution and contribute to a cleaner, more sustainable future.
       </p>
       {!country && (
         <Alert variant="destructive" className="max-w-[700px] mt-4">
