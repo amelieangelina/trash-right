@@ -9,13 +9,13 @@ import {Alert, AlertDescription, AlertTitle,} from "@/components/ui/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from "@/components/ui/accordion"
 import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,} from "@/components/ui/select"
 
-const API_KEY = ""
 
 interface ComponentProps {
   getImage: () => Promise<string>;
+  api_key: any;
 }
 
-const Component = ({ getImage}: ComponentProps) => {
+const Component = ({ getImage, api_key}: ComponentProps) => {
   const [photoSrc, setPhotoSrc] = useState('');
   const [data, setData] = useState(['']);
   const [betterWay, setBetterWay] = useState('');
@@ -30,10 +30,9 @@ const Component = ({ getImage}: ComponentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const captureRef = useRef<HTMLButtonElement>(null);
 
-
   // Setup GenAI-model
   const { GoogleGenerativeAI } = require("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(API_KEY);
+  const genAI = new GoogleGenerativeAI(api_key);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
 
 
