@@ -1,1 +1,0 @@
-in package install dotenv und @google-generativeai

@@ -21,7 +21,7 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
   const [betterWay, setBetterWay] = useState('');
   const [noRecycling, setNoRecycling] = useState('');
   const [country, setCountry] = useState('');
-  const [textToSpeak, setTextToSpeak] = useState(['']);
+  const [textToSpeak, setTextToSpeak] = useState('');
   const [loading, setLoading] = useState(false);
   const [generateAnswer, setGenerateAnswer] = useState(false);
   const [isSwitchOn, setIsSwitchOn] = useState(false);
@@ -29,6 +29,7 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
   const photoRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const captureRef = useRef<HTMLButtonElement>(null);
+  var myTimeout:  NodeJS.Timeout;
 
   // Setup GenAI-model
   const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -241,7 +242,7 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
     setPhotoSrc('');
     setGenerateAnswer(false);
   };
-
+  
 
   const askai = async () =>{
     var encodedImage = await getImage();
@@ -261,38 +262,41 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
     const result3 = await model.generateContent(prompt3);
     setNoRecycling(result3.response.text());
     await createTextforSpeech(splitData);
-    if (isSwitchOn) {
-      speakText();
-    }
     setData(splitData);
     setLoading(false);
-  }
-
-  const speakText = () => {
-    console.log("Speak Text");
-    const text = textToSpeak.toString();
-    console.log(text);
-    const voices = speechSynthesis.getVoices();
-    for (const str of textToSpeak) {
-      const utterance = new SpeechSynthesisUtterance(str);      
-      utterance.voice = voices[3];
-      speechSynthesis.speak(utterance);
+    if (isSwitchOn) {
+      speakText();
     }
   }
 
   const createTextforSpeech = (data: any) => {
     if (data[0] === "no trash") {
-      setTextToSpeak( ["Unfortunately we could not detect any trash in the picture. This could be, because in our eyes the item does not belong to the trash bin or the picture is not clear enough.", "Please try again to detect more trash."]);
+      setTextToSpeak( "Unfortunately we could not detect any trash in the picture. This could be, because in our eyes the item does not belong to the trash bin or the picture is not clear enough. Please try again to detect more trash.");
     } else {
-      const text = ["We detected " + data[0] + "." + "Which materials does it consist of?" + data[1] + "." + data[2] + ".",
-      "How can you properly dispose this trash?" + data[3] + ".",
-      "Where will it end up?" + data[4] + "." + data[5] + ".",
-      "Is there hacks to avoid this kind of trash?"+ "."+ betterWay.toString() + ".",
-      "What is the impact on the environment?"+  "."+noRecycling];
+      const text = "We detected " + data[0] + "." + "Which materials does it consist of?" + data[1] + "." + data[2] + "."+
+      "How can you properly dispose this trash?" + data[3] + "."+
+      "Where will it end up?" + data[4] + "." + data[5] + "."+
+      "Is there hacks to avoid this kind of trash?"+ "."+ betterWay.toString() + "."+
+      "What is the impact on the environment?"+  "."+ noRecycling.toString() + ".";
       console.log("Text to speak: " + text);  
       setTextToSpeak(text);
     }
   }  
+  
+  function myTimer() {
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
+      myTimeout = setTimeout(myTimer, 10000);
+  }
+
+  const speakText = () => {
+    window.speechSynthesis.cancel();
+    myTimeout = setTimeout(myTimer, 10000);
+    var toSpeak = textToSpeak;
+    var utt = new SpeechSynthesisUtterance(toSpeak);
+    utt.onend =  function() { clearTimeout(myTimeout); }
+    window.speechSynthesis.speak(utt);
+  }
 
   const formatData = (data: any) => {
     if (data[0] === "no trash") {
