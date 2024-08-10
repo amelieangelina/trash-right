@@ -255,10 +255,10 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
     const result = await model.generateContent([prompt, imagePart])
     const text = result.response.text();
     const splitData = text.split(".");
-    const prompt2 = "In a few sentences give me hacks on how to reduce waste of " + splitData[0] + "? Type the answer in continious text.";
+    const prompt2 = "In a few sentences give me hacks on how to reduce waste of " + splitData[0] + " in "+ country.toString() +"? Type the answer in continious text.";
     const result2 = await model.generateContent(prompt2);
     setBetterWay(result2.response.text());
-    const prompt3 = "In a few sentences elaborate on what impact the materials:" + splitData[1] + " used in "+ splitData[0] + "can have on the environment, when not being recycled? What exaclty are the negative impacts on the environment? Type the answer in a continous text.";
+    const prompt3 = "In a few sentences elaborate on what impact the materials:" + splitData[1] + " used in "+ splitData[0] + "can have on the environment, when not being recycled in "+ country.toString() + " ? What exaclty are the negative impacts on the environment? Type the answer in a continous text.";
     const result3 = await model.generateContent(prompt3);
     setNoRecycling(result3.response.text());
     setData(splitData);
