@@ -261,17 +261,16 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
     const prompt3 = "In a few sentences elaborate on what impact the materials:" + splitData[1] + " used in "+ splitData[0] + "can have on the environment, when not being recycled? What exaclty are the negative impacts on the environment? Type the answer in a continous text.";
     const result3 = await model.generateContent(prompt3);
     setNoRecycling(result3.response.text());
-    await createTextforSpeech(splitData);
     setData(splitData);
     setLoading(false);
     if (isSwitchOn) {
-      speakText();
+      speakText(splitData);
     }
   }
 
   const createTextforSpeech = (data: any) => {
     if (data[0] === "no trash") {
-      setTextToSpeak( "Unfortunately we could not detect any trash in the picture. This could be, because in our eyes the item does not belong to the trash bin or the picture is not clear enough. Please try again to detect more trash.");
+      return ( "Unfortunately we could not detect any trash in the picture. This could be, because in our eyes the item does not belong to the trash bin or the picture is not clear enough. Please try again to detect more trash.");
     } else {
       const text = "We detected " + data[0] + "." + "Which materials does it consist of?" + data[1] + "." + data[2] + "."+
       "How can you properly dispose this trash?" + data[3] + "."+
@@ -279,7 +278,7 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
       "Is there hacks to avoid this kind of trash?"+ "."+ betterWay.toString() + "."+
       "What is the impact on the environment?"+  "."+ noRecycling.toString() + ".";
       console.log("Text to speak: " + text);  
-      setTextToSpeak(text);
+      return text;
     }
   }  
   
@@ -289,10 +288,11 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
       myTimeout = setTimeout(myTimer, 10000);
   }
 
-  const speakText = () => {
+  const speakText = (data:any) => {
+    const text = createTextforSpeech(data);
     window.speechSynthesis.cancel();
     myTimeout = setTimeout(myTimer, 10000);
-    var toSpeak = textToSpeak;
+    var toSpeak = text;
     var utt = new SpeechSynthesisUtterance(toSpeak);
     utt.onend =  function() { clearTimeout(myTimeout); }
     window.speechSynthesis.speak(utt);

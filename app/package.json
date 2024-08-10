@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.1.0",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-select": "^2.1.1",
@@ -21,12 +22,12 @@
     "lucide-react": "^0.416.0",
     "marked": "^14.0.0",
     "next": "14.2.5",
+    "package.json": "^2.0.1",
     "react": "^18",
     "react-dom": "^18",
     "sharp": "^0.33.4",
     "tailwind-merge": "^2.4.0",
-    "tailwindcss-animate": "^1.0.7",
-    "@google/generative-ai": "^0.1.0"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^20",
