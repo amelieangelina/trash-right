@@ -9,19 +9,19 @@ import {Alert, AlertDescription, AlertTitle,} from "@/components/ui/alert"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger, } from "@/components/ui/accordion"
 import {Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,} from "@/components/ui/select"
 
-const API_KEY = ""
 
 interface ComponentProps {
   getImage: () => Promise<string>;
+  api_key: any;
 }
 
-const Component = ({ getImage}: ComponentProps) => {
+const Component = ({ getImage, api_key}: ComponentProps) => {
   const [photoSrc, setPhotoSrc] = useState('');
   const [data, setData] = useState(['']);
   const [betterWay, setBetterWay] = useState('');
   const [noRecycling, setNoRecycling] = useState('');
   const [country, setCountry] = useState('');
-  const [textToSpeak, setTextToSpeak] = useState(['']);
+  const [textToSpeak, setTextToSpeak] = useState('');
   const [loading, setLoading] = useState(false);
   const [generateAnswer, setGenerateAnswer] = useState(false);
   const [isSwitchOn, setIsSwitchOn] = useState(false);
@@ -29,11 +29,11 @@ const Component = ({ getImage}: ComponentProps) => {
   const photoRef = useRef<HTMLImageElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const captureRef = useRef<HTMLButtonElement>(null);
-
+  var myTimeout:  NodeJS.Timeout;
 
   // Setup GenAI-model
   const { GoogleGenerativeAI } = require("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(API_KEY);
+  const genAI = new GoogleGenerativeAI(api_key);
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
 
 
@@ -242,13 +242,14 @@ const Component = ({ getImage}: ComponentProps) => {
     setPhotoSrc('');
     setGenerateAnswer(false);
   };
-
+  
 
   const askai = async () =>{
     var encodedImage = await getImage();
-    const prompt = "Type the name of the recycable object shown in the picture and end the statement with a '.'. If there is not recycable object shown, please type 'no trash.'." +
-    "In 1 sentence, type what materials the trash most probably consists of. In a third sentence tell me how many years this exact object will take to decompose in numbers."+
-    "In 1 sentence tell me how i can properly dispose this trash in "+ country.toString +
+    console.log("Country" + country.toString());
+    const prompt = "Type the name of the recycable object shown in the picture and end the statement with a '.'. If there is no recycable object shown, please type 'no trash.'." +
+    "In 1 sentence, type what materials the trash most probably consists of. In one sentence tell me how many years this exact object will take to decompose in numbers."+
+    "In 1 sentence tell me how i can properly dispose this trash in "+ country.toString() + "."+
     "In 1 sentence tell me where this trash will end up in the best case scenario. In 1 sentences tell me where the trash will end up in the worst case scenario.";
     const imagePart = base64ToGenerativePart(encodedImage, 'image/jpeg');
     const result = await model.generateContent([prompt, imagePart])
@@ -261,38 +262,41 @@ const Component = ({ getImage}: ComponentProps) => {
     const result3 = await model.generateContent(prompt3);
     setNoRecycling(result3.response.text());
     await createTextforSpeech(splitData);
-    if (isSwitchOn) {
-      speakText();
-    }
     setData(splitData);
     setLoading(false);
-  }
-
-  const speakText = () => {
-    console.log("Speak Text");
-    const text = textToSpeak.toString();
-    console.log(text);
-    const voices = speechSynthesis.getVoices();
-    for (const str of textToSpeak) {
-      const utterance = new SpeechSynthesisUtterance(str);      
-      utterance.voice = voices[3];
-      speechSynthesis.speak(utterance);
+    if (isSwitchOn) {
+      speakText();
     }
   }
 
   const createTextforSpeech = (data: any) => {
     if (data[0] === "no trash") {
-      setTextToSpeak( ["Unfortunately we could not detect any trash in the picture. This could be, because in our eyes the item does not belong to the trash bin or the picture is not clear enough.", "Please try again to detect more trash."]);
+      setTextToSpeak( "Unfortunately we could not detect any trash in the picture. This could be, because in our eyes the item does not belong to the trash bin or the picture is not clear enough. Please try again to detect more trash.");
     } else {
-      const text = ["We detected " + data[0] + "." + "Which materials does it consist of?" + data[1] + "." + data[2] + ".",
-      "How can you properly dispose this trash?" + data[3] + ".",
-      "Where will it end up?" + data[4] + "." + data[5] + ".",
-      "Is there hacks to avoid this kind of trash?"+ "."+ betterWay.toString() + ".",
-      "What is the impact on the environment?"+  "."+noRecycling];
+      const text = "We detected " + data[0] + "." + "Which materials does it consist of?" + data[1] + "." + data[2] + "."+
+      "How can you properly dispose this trash?" + data[3] + "."+
+      "Where will it end up?" + data[4] + "." + data[5] + "."+
+      "Is there hacks to avoid this kind of trash?"+ "."+ betterWay.toString() + "."+
+      "What is the impact on the environment?"+  "."+ noRecycling.toString() + ".";
       console.log("Text to speak: " + text);  
       setTextToSpeak(text);
     }
   }  
+  
+  function myTimer() {
+      window.speechSynthesis.pause();
+      window.speechSynthesis.resume();
+      myTimeout = setTimeout(myTimer, 10000);
+  }
+
+  const speakText = () => {
+    window.speechSynthesis.cancel();
+    myTimeout = setTimeout(myTimer, 10000);
+    var toSpeak = textToSpeak;
+    var utt = new SpeechSynthesisUtterance(toSpeak);
+    utt.onend =  function() { clearTimeout(myTimeout); }
+    window.speechSynthesis.speak(utt);
+  }
 
   const formatData = (data: any) => {
     if (data[0] === "no trash") {
@@ -406,7 +410,7 @@ const Component = ({ getImage}: ComponentProps) => {
         TrashRight
       </h1>
       <p className="leading-7 [&:not(:first-child)]:mt-6 max-w-[700px] text-justify">
-      TrashScan is an innovative application that leverages artificial intelligence to promote environmental awareness and sustainability. The app allows users to take a picture of any trash item, which is then analyzed using AI algorithms to accurately identify the type of waste. TrashScan provides detailed information about the item, including its environmental impact, recycling instructions, and proper disposal methods. By empowering individuals with knowledge about waste management, TrashScan aims to reduce environmental pollution and contribute to a cleaner, more sustainable future.
+      TrashRight is an innovative application that leverages artificial intelligence to promote environmental awareness and sustainability. The app allows users to take a picture of any trash item, which is then analyzed using AI algorithms to accurately identify the type of waste. TrashScan provides detailed information about the item, including its environmental impact, recycling instructions, and proper disposal methods. By empowering individuals with knowledge about waste management, TrashScan aims to reduce environmental pollution and contribute to a cleaner, more sustainable future.
       </p>
       {!country && (
         <Alert variant="destructive" className="max-w-[700px] mt-4">

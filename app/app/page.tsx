@@ -2,6 +2,8 @@ import Component from './Component';
 import fs from 'fs';
 import path from 'path';
 
+const API_KEY = process.env.API_KEY;
+
 export default function Home() {
 
   const getImage = async () =>{
@@ -14,7 +16,7 @@ export default function Home() {
   
   return (
     <div>
-      <Component getImage={getImage} />
+      <Component getImage={getImage} api_key={API_KEY} />
     </div>
   );
 }
