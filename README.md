@@ -7,9 +7,7 @@
     API_KEY=<your_api_key>
 - Make sure port 3000 is not occupied
 - from inside the cloned /trash-right directory run:
-'''bash
-docker compose up --build
-'''
+< docker compose up --build >
 This will build the docker image an run the application.
 - To use the webapp open http://localhost:3000 in Google Chrome
 ## Known problems
