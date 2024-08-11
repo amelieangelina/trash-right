@@ -10,5 +10,3 @@
 < docker compose up --build >
 This will build the docker image an run the application.
 - To use the webapp open http://localhost:3000 in Google Chrome
-## Known problems
-Read Assistant breaks, if the text is too long. This is a know bug of the SpeechAssistant in Chrome.

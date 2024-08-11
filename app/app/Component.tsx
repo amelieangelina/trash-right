@@ -410,7 +410,7 @@ const Component = ({ getImage, api_key}: ComponentProps) => {
         TrashRight
       </h1>
       <p className="leading-7 [&:not(:first-child)]:mt-6 max-w-[700px] text-justify">
-      TrashRight is an innovative application that leverages artificial intelligence to promote environmental awareness and sustainability. The app allows users to take a picture of any trash item, which is then analyzed using AI algorithms to accurately identify the type of waste. TrashScan provides detailed information about the item, including its environmental impact, recycling instructions, and proper disposal methods. By empowering individuals with knowledge about waste management, TrashScan aims to reduce environmental pollution and contribute to a cleaner, more sustainable future.
+      TrashRight is an innovative application that leverages artificial intelligence to promote environmental awareness and sustainability. The app allows users to take a picture of any trash item, which is then analyzed using the Gemini API to accurately identify the type of waste. TrashRight provides detailed information about the item, including its environmental impact, recycling instructions, and proper disposal methods. By empowering individuals with knowledge about waste management, TrashRight aims to reduce environmental pollution and contribute to a cleaner, more sustainable future.
       </p>
       {!country && (
         <Alert variant="destructive" className="max-w-[700px] mt-4">
