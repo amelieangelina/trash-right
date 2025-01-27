@@ -10,3 +10,5 @@
 < docker compose up --build >
 This will build the docker image an run the application.
 - To use the webapp open http://localhost:3000 in Google Chrome
+## Explanation of the App
+Find an explanation and demonstration of the app here: [YouTube](https://www.youtube.com/watch?v=6ZBQu8dQbgE&t=5s)
